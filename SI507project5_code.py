@@ -5,7 +5,7 @@ import requests_oauthlib
 from functools import reduce
 import csv
 from eb_data import CLIENT_ID, CLIENT_SECRET, personal_token
-
+import sys
 
 AUTHORIZATION_URL = 'https://www.eventbrite.com/oauth/authorize'
 TOKEN_URL = 'https://www.eventbrite.com/oauth/token'
@@ -54,7 +54,7 @@ def get_eventbrite_cache(search_params, CACHE_DICTION, CACHE_FNAME, force_downlo
         except FileNotFoundError:
             token = None
 
-        if token and not force_download:
+        if token:
             print('Token already saved, just retrieved it')
             oauth2inst = requests_oauthlib.OAuth2Session(CLIENT_ID, token=token)
         else:
@@ -108,7 +108,7 @@ class Event(object):
         self.get_data()
 
     def get_data(self, key_list=[('id',), ('name', 'text'), ('capacity',),
-                                 ('resource_uri',), ('is_free',),
+                                 ('url',), ('is_free',),
                                  ('description', 'text')]):
         self.data = {}
         for key in key_list:
@@ -134,6 +134,12 @@ def write_to_csv(event_list, filename):
 
 
 if __name__ == '__main__':
+    try:
+        force_download = sys.argv[1].lower() == 'true'
+        print(type(force_download))
+    except:
+        force_download = False
+
     harvey_search_params = {'q':'Hurricane Harvey',
                             "location.address":'6100 Main St, Houston, TX 77005',
                             'location.within':'30mi'}
@@ -143,10 +149,12 @@ if __name__ == '__main__':
 
     HARVEY_CACHE_DICTION = get_eventbrite_cache(harvey_search_params, 
                                                 HARVEY_CACHE_DICTION,
-                                                HARVEY_CACHE_FNAME)
+                                                HARVEY_CACHE_FNAME,
+                                                force_download)
     CONCERT_CACHE_DICTION = get_eventbrite_cache(concert_search_params,
                                                  CONCERT_CACHE_DICTION,
-                                                 CONCERT_CACHE_FNAME)
+                                                 CONCERT_CACHE_FNAME,
+                                                 force_download)
 
     harvey_event_list = [Event(event_dict) for event_dict in HARVEY_CACHE_DICTION.values()]
     concert_event_list = [Event(event_dict) for event_dict in CONCERT_CACHE_DICTION.values()]
