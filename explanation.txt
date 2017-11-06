@@ -1,1 +1,13 @@
-Put your Project 5 brief explanation, as directed, here.
+I am accessing the Eventbrite API and gathering:
+- Up to 50 events that are related to "Hurricane Harvey" and within 30 miles of downtown Houston
+- Up to 50 events with 'concert' as it's category that are within 20 miles of UM's central campus.
+
+For each search result, I will store the following
+- event name
+- event capacity
+- event url
+- whether the event is free or not
+- The first sentence of the description
+- event url
+
+If any of these fields are empty, it will be replaced with None
