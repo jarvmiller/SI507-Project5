@@ -4,4 +4,7 @@ eb_data.py
 
 token.json
 
-cache_contents.json
+concert_cache_contents.json
+harvey_cache_contents.json
+
+venv/
