@@ -6,7 +6,9 @@ from functools import reduce
 import csv
 from eb_data import CLIENT_ID, CLIENT_SECRET, personal_token
 import sys
+from datetime import datetime
 
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 AUTHORIZATION_URL = 'https://www.eventbrite.com/oauth/authorize'
 TOKEN_URL = 'https://www.eventbrite.com/oauth/token'
 REDIRECT_URI = 'https://www.programsinformationpeople.org/runestone/oauth'
@@ -27,6 +29,25 @@ def check_if_cached(fname):
         CACHE_DICTION = {}
     return CACHE_DICTION
 
+def has_cache_expired(timestamp_str, expire_in_days):
+    """Check if cache timestamp is over expire_in_days old"""
+    # gives current datetime
+    now = datetime.now()
+
+    # datetime.strptime converts a formatted string into datetime object
+    cache_timestamp = datetime.strptime(timestamp_str, DATETIME_FORMAT)
+
+    # subtracting two datetime objects gives you a timedelta object
+    delta = now - cache_timestamp
+    delta_in_days = delta.days
+
+    # now that we have days as integers, we can just use comparison
+    # and decide if cache has expired or not
+    if delta_in_days > expire_in_days:
+        return True # It's been longer than expiry time
+    else:
+        return False
+
 # This is just for testing
 HARVEY_CACHE_DICTION = check_if_cached(HARVEY_CACHE_FNAME)
 CONCERT_CACHE_DICTION = check_if_cached(CONCERT_CACHE_FNAME)
@@ -39,15 +60,17 @@ def get_saved_token():
         return token_dict
 
 
-def save_token(token_dict):
+def save_token(token_dict, expire_in_days):
+    token_dict['timestamp'] = datetime.now().strftime(DATETIME_FORMAT)
+    token_dict['expire_in_days'] = expire_in_days
     with open('token.json', 'w') as f:
         token_json = json.dumps(token_dict)
         f.write(token_json)
 
 
-def get_eventbrite_cache(search_params, CACHE_FNAME, force_download=False):
+def get_eventbrite_cache(search_params, CACHE_FNAME, expire_in_days=7, force_download=False):
     CACHE_DICTION = check_if_cached(CACHE_FNAME)
-
+    token_expired = False
     # if we need to get an oauth2 session started
     if CACHE_DICTION == {} or force_download:
         # see if we have the token
@@ -57,9 +80,14 @@ def get_eventbrite_cache(search_params, CACHE_FNAME, force_download=False):
             token = None
 
         if token:
-            print('Token already saved, just retrieved it')
-            oauth2inst = requests_oauthlib.OAuth2Session(CLIENT_ID, token=token)
-        else:
+            if not has_cache_expired(token['timestamp'], token['expire_in_days']):
+                print('Token already saved and not expired')
+                oauth2inst = requests_oauthlib.OAuth2Session(CLIENT_ID, token=token)
+            else:
+                print('token has expired, will need to get a new one')
+                token_expired=True
+
+        if token is None or token_expired:
             print('Getting token the long way')
             oauth2inst = requests_oauthlib.OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI) # Create an instance of an OAuth2Session
 
@@ -72,7 +100,7 @@ def get_eventbrite_cache(search_params, CACHE_FNAME, force_download=False):
 
             # The OAuth2Session instance has a method that extracts what we need from the url, and helps do some other back and forth with EB
             token = oauth2inst.fetch_token(TOKEN_URL, authorization_response=authorization_response, client_secret=CLIENT_SECRET)
-            save_token(token)
+            save_token(token, expire_in_days=expire_in_days)
         
 
 
@@ -149,11 +177,11 @@ if __name__ == '__main__':
 
     harvey_response = get_eventbrite_cache(harvey_search_params, 
                                            HARVEY_CACHE_FNAME,
-                                           force_download)
+                                           force_download=force_download)
 
     concert_response = get_eventbrite_cache(concert_search_params,
                                             CONCERT_CACHE_FNAME,
-                                            force_download)
+                                            force_download=force_download)
 
     harvey_event_list = [Event(event_dict) for event_dict in harvey_response.values()]
     concert_event_list = [Event(event_dict) for event_dict in concert_response.values()]

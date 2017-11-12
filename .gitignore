@@ -1,7 +1,7 @@
 __pycache__/
 
 eb_data.py
-
+eb_data.pyc
 token.json
 
 concert_cache_contents.json
