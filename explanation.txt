@@ -1,6 +1,6 @@
 I am accessing the Eventbrite API and gathering:
-- Up to 50 events that are related to "Hurricane Harvey" and within 30 miles of downtown Houston
-- Up to 50 events with 'concert' as it's category that are within 20 miles of UM's central campus.
+- Events that are related to "Hurricane Harvey" and within 30 miles of downtown Houston
+- Events with 'concert' as it's category that are within 20 miles of UM's central campus.
 
 For each search result, I will store the following
 - event name
@@ -10,4 +10,6 @@ For each search result, I will store the following
 - The first sentence of the description
 - event url
 
-If any of these fields are empty, it will be replaced with None
+
+URL for the API: https://www.eventbrite.com/developer/v3/
+authentication url: https://www.eventbrite.com/developer/v3/api_overview/authentication/
