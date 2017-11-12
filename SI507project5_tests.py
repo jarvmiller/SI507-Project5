@@ -33,7 +33,7 @@ class TEST_EVENT(unittest.TestCase):
                          "39130956745: Hurricane Harvey Benefit Concert")
 
 
-class TEST_CSVS(unittest.TestCase):
+class TEST_CSV(unittest.TestCase):
     def setUp(self):
         self.harvey = open('harvey.csv')
         self.concert = open('um_concert.csv')

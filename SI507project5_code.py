@@ -27,9 +27,9 @@ def check_if_cached(fname):
         CACHE_DICTION = {}
     return CACHE_DICTION
 
+# This is just for testing
 HARVEY_CACHE_DICTION = check_if_cached(HARVEY_CACHE_FNAME)
 CONCERT_CACHE_DICTION = check_if_cached(CONCERT_CACHE_FNAME)
-
 
 def get_saved_token():
     with open('token.json', 'r') as f:
@@ -45,7 +45,9 @@ def save_token(token_dict):
         f.write(token_json)
 
 
-def get_eventbrite_cache(search_params, CACHE_DICTION, CACHE_FNAME, force_download=False):
+def get_eventbrite_cache(search_params, CACHE_FNAME, force_download=False):
+    CACHE_DICTION = check_if_cached(CACHE_FNAME)
+
     # if we need to get an oauth2 session started
     if CACHE_DICTION == {} or force_download:
         # see if we have the token
@@ -79,7 +81,6 @@ def get_eventbrite_cache(search_params, CACHE_DICTION, CACHE_FNAME, force_downlo
 
         # the result is now a dictionary
         response_diction = json.loads(r.text)
-
         with open(CACHE_FNAME, 'w') as cache_file:
             print('caching result as:', CACHE_FNAME)
             for event in response_diction['events']:
@@ -136,7 +137,6 @@ def write_to_csv(event_list, filename):
 if __name__ == '__main__':
     try:
         force_download = sys.argv[1].lower() == 'true'
-        print(type(force_download))
     except:
         force_download = False
 
@@ -147,22 +147,16 @@ if __name__ == '__main__':
                              'location.address': "500 S State St, Ann Arbor, MI 48109",
                              'location.within':'20mi'}
 
-    HARVEY_CACHE_DICTION = get_eventbrite_cache(harvey_search_params, 
-                                                HARVEY_CACHE_DICTION,
-                                                HARVEY_CACHE_FNAME,
-                                                force_download)
-    CONCERT_CACHE_DICTION = get_eventbrite_cache(concert_search_params,
-                                                 CONCERT_CACHE_DICTION,
-                                                 CONCERT_CACHE_FNAME,
-                                                 force_download)
+    harvey_response = get_eventbrite_cache(harvey_search_params, 
+                                           HARVEY_CACHE_FNAME,
+                                           force_download)
 
-    harvey_event_list = [Event(event_dict) for event_dict in HARVEY_CACHE_DICTION.values()]
-    concert_event_list = [Event(event_dict) for event_dict in CONCERT_CACHE_DICTION.values()]
+    concert_response = get_eventbrite_cache(concert_search_params,
+                                            CONCERT_CACHE_FNAME,
+                                            force_download)
+
+    harvey_event_list = [Event(event_dict) for event_dict in harvey_response.values()]
+    concert_event_list = [Event(event_dict) for event_dict in concert_response.values()]
     print('writing to csv')
     write_to_csv(harvey_event_list, 'harvey.csv')
     write_to_csv(concert_event_list, 'um_concert.csv')
-
-# to do:
-# make a separate cache file, one for harvey, one for A2 concerts
-
-## Make sure to run your code and write CSV files by the end of the program.
